@@ -21,6 +21,6 @@
 	},
 	"compileOnSave": true,
 	"files": [
-		"ts/Response/Awards.ts"
+		"ts/index.ts"
 	]
 }

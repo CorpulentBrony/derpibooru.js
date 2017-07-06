@@ -1,3 +1,4 @@
+import { Nullable } from "../Nullable";
 import { URL } from "../URL";
 
 // https://derpibooru.org/channels.json
@@ -11,51 +12,50 @@ export type Galleries = Array<Gallery>;
 export type oEmbed = oEmbedJson | oEmbedXml;
 // https://derpibooru.org/oembed.xml?url=https://derpibooru.org/17842
 export type oEmbedXml = string;
+export type RepresentationAllNames = RepresentationAnimatedNames | RepresentationNames;
+export type RepresentationAnimatedNames = "webm" | "mp4";
 export type RepresentationNames = "thumb_tiny" | "thumb_small" | "thumb" | "small" | "medium" | "large" | "tall" | "full";
-export type Representations = { [P in RepresentationNames]: URL; } // URL (safe if https: appended)
+export type Representations = Partial<RepresentationsAnimated> & { [P in RepresentationNames]: URL; };
+export type RepresentationsAnimated = { [P in RepresentationAnimatedNames]: URL; };
 export type StateNames = "rejected" | "verified";
 export type UserRoleNames = "admin" | "assistant" | "moderator" | "user";
 
-export interface Award {
+export interface Award extends Titled {
 	image_url: URL; // URL (safe if https: appended)
-	title: string;
 	award_id: number;
 	label: string;
 	awarded_on: Date; // Date
 }
 
-export interface Channel {
+export interface Channel extends Nullable<Descriptive>, Titled {
 	short_name: string;
-	title: string;
-	description: string | null;
 	is_live: boolean;
 	nsfw: boolean;
 	viewers: number;
 	image: URL; // URL (safe if https: appended)
 	last_fetched_at: Date; // Date
-	last_live_at: Date | null; // Date
-	next_check_at: Date | null; // Date
+	last_live_at: Nullable<Date>; // Date
+	next_check_at: Nullable<Date>; // Date
 	artist_tag: string;
 }
 
-export interface Comment {
-	id: number; // id
-	body: string;
-	author: string;
+export interface Comment extends Identifiable, UserPostedTextContent {
 	image_id: number;
 	posted_at: Date; // Date
 	deleted: boolean;
 }
 
-export interface DuplicateReport {
-	id: number; // id
+export interface Created { created_at: Date; }
+
+export interface Descriptive { description: string; }
+
+export interface DuplicateReport extends Created, Identifiable {
 	state: StateNames;
 	reason: string;
 	image_id: number;
 	duplicate_of_image_id: number;
 	user_id: null;
 	modifier: User;
-	created_at: Date; // Date
 }
 
 export interface FormatMimeTypes {
@@ -65,10 +65,7 @@ export interface FormatMimeTypes {
 }
 
 // https://derpibooru.org/filters/100073.json
-export interface Filter {
-	id: number; // id
-	name: string;
-	description: string;
+export interface Filter extends Descriptive, Identifiable, Named {
 	hidden_tag_ids: Array<number>;
 	spoilered_tag_ids: Array<number>;
 	hidden_tags: string;
@@ -77,7 +74,7 @@ export interface Filter {
 	public: boolean;
 	system: boolean;
 	user_count: number;
-	user_id: number | null;
+	user_id: Nullable<number>;
 }
 
 // https://derpibooru.org/filters.json
@@ -87,29 +84,20 @@ export interface Filters {
 	search_filters: Array<Filter>;
 }
 
-export interface ForumPost {
-	id: number; // id
-	topic_id: number;
-	body: string;
-	author: string;
-}
+export interface ForumPost extends Identifiable, UserPostedTextContent { topic_id: number; }
 
-export interface Gallery {
-	id: number; // id
-	title: string;
-	description: string;
+export interface Gallery extends Created, Descriptive, Identifiable, Titled {
 	spoiler_warning: string;
 	updated_at: Date; // Date
-	created_at: Date; // Date
 	creator_id: number;
 	watcher_count: number;
 	image_count: number;
 }
 
+export interface Identifiable<T = number> { id: T; }
+
 // https://derpibooru.org/44819.json
-export interface Image {
-	id: string; // id
-	created_at: Date; // Date
+export interface Image extends Created, Descriptive, Identifiable<string> {
 	updated_at: Date; // Date
 	duplicate_reports: Array<DuplicateReport>;
 	first_seen_at: Date; // Date
@@ -119,7 +107,6 @@ export interface Image {
 	width: number;
 	height: number;
 	file_name: string;
-	description: string;
 	uploader: string;
 	image: URL; // URL (safe if https: appended)
 	upvotes: number;
@@ -130,8 +117,8 @@ export interface Image {
 	aspect_ratio: number;
 	original_format: keyof FormatMimeTypes;
 	mime_type: FormatMimeTypes[keyof FormatMimeTypes];
-	sha512_hash: number;
-	orig_sha512_hash: number;
+	sha512_hash: string;
+	orig_sha512_hash: Nullable<string>;
 	source_url: string; // URL
 	comments?: Comments;
 	favourited_by_users?: Array<string>;
@@ -143,19 +130,19 @@ export interface Image {
 // https://derpibooru.org/images.json
 export interface Images { images: Array<Image>; }
 
-export interface Link {
+export interface Link extends Created {
 	user_id: number;
-	created_at: Date; // Date
 	state: StateNames;
 	tag_ids: Array<number>;
 }
 
+export interface Named { name: string; }
+
 // https://derpibooru.org/oembed.json?url=https://derpibooru.org/17842
-export interface oEmbedJson {
+export interface oEmbedJson extends Titled {
 	version: "1.0";
 	type: "photo";
-	title: string;
-	author_url: string | null; // URL
+	author_url: Nullable<string>; // URL
 	author_name: string;
 	provider_name: "Derpibooru";
 	provider_url: URL; // URL (safe)
@@ -180,31 +167,26 @@ export interface Search {
 }
 
 // https://derpibooru.org/tags.json
-export interface Tag {
-	id: number;
-	name: string;
+export interface Tag extends Descriptive, Identifiable, Named {
 	slug: string;
-	description: string;
 	short_description: string;
 	images: number;
 	spoiler_image_uri: URL; // URL (safe if https: appended)
-	aliased_to: string | null;
-	aliased_to_id: number | null;
-	namespace: string | null;
+	aliased_to: Nullable<string>;
+	aliased_to_id: Nullable<number>;
+	namespace: Nullable<string>;
 	name_in_namespace: string;
 	implied_tags: string;
 	implied_tag_ids: Array<number>;
 }
 
+export interface Titled { title: string; }
+
 // https://derpibooru.org/profiles/Corpulent+Brony.json
-export interface User {
-	id: number; // id
-	name: string;
+export interface User extends Created, Descriptive, Identifiable, Named {
 	slug: string;
 	role: UserRoleNames;
-	description: string;
 	avatar_url: URL; // URL (safe if https: appended)
-	created_at: Date; // Date
 	comment_count: number;
 	uploads_count: number;
 	post_count: number;
@@ -212,3 +194,10 @@ export interface User {
 	links: Array<Link>;
 	awards: Array<Award>;
 }
+
+export interface UserPostedTextContent {
+	body: string;
+	author: string;
+}
+
+export const representationNames: Array<RepresentationAllNames> = Array.of<RepresentationAllNames>("thumb_tiny", "thumb_small", "thumb", "small", "medium", "large", "tall", "full", "webm", "mp4");

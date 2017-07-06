@@ -1,9 +1,14 @@
+import { Comments } from "./Comments";
 import { DuplicateReports } from "./DuplicateReports";
 import { GenericResponse } from "./GenericResponse";
 import { Interfaces } from "../Interfaces";
+import { Nullable } from "../Nullable";
+import { Representations } from "./Representations";
 import { URL } from "../URL";
 
-const overrides = new Map<keyof Image, GenericResponse.Instantiable>([["created_at", Date], ["updated_at", Date], ["duplicate_reports", DuplicateReports], ["first_seen_at", Date], ["image", URL]]);
+const overrides = new Map<keyof Image, GenericResponse.Instantiable>([
+	["created_at", Date], ["updated_at", Date], ["duplicate_reports", DuplicateReports], ["first_seen_at", Date], ["image", URL], ["comments", Comments], ["representations", Representations]
+]);
 
 export class Image extends GenericResponse implements Readonly<Interfaces.Response.Image> {
 	public readonly id: string;
@@ -27,52 +32,23 @@ export class Image extends GenericResponse implements Readonly<Interfaces.Respon
 	public readonly tag_ids: Array<string>;
 	public readonly aspect_ratio: number;
 	public readonly original_format: keyof Interfaces.Response.FormatMimeTypes;
-	public readonly mime_type: Interfaces.Response.FormatMimeType[keyof Interfaces.Response.FormatMimeType];
-	public readonly sha512_hash: number;
-	public readonly orig_sha512_hash: number;
+	public readonly mime_type: Interfaces.Response.FormatMimeTypes[keyof Interfaces.Response.FormatMimeTypes];
+	public readonly sha512_hash: string;
+	public readonly orig_sha512_hash: Nullable<string>;
 	public readonly source_url: string;
 	public readonly comments?: Comments;
+	public readonly favourited_by_users?: Array<string>;
+	public readonly representations: Representations;
+	public readonly is_rendered: boolean;
+	public readonly is_optimized: boolean;
 
-	constructor(id: string);
+	constructor(id: number | string);
 	constructor(result: Interfaces.Response.Image);
-	constructor(idOrResult: string | Interfaces.Response.Image) {
-		if (typeof idOrResult === "string") {
+	constructor(idOrResult: number | string | Interfaces.Response.Image) {
+		if (typeof idOrResult === "string" || typeof idOrResult === "number") {
 			// query ie https://derpibooru.org/44819.json
 		} else {
 			super(overrides, idOrResult);
 		}
 	}
 }
-
-/*export interface Image {
-	id: string; // id
-	created_at: Date; // Date
-	updated_at: Date; // Date
-	duplicate_reports: Array<DuplicateReport>;
-	first_seen_at: Date; // Date
-	uploader_id: string;
-	score: number;
-	comment_count: number;
-	width: number;
-	height: number;
-	file_name: string;
-	description: string;
-	uploader: string;
-	image: URL; // URL (safe if https: appended)
-	upvotes: number;
-	downvotes: number;
-	faves: number;
-	tags: string; // maybe tags array?
-	tag_ids: Array<string>;
-	aspect_ratio: number;
-	original_format: keyof FormatMimeTypes;
-	mime_type: FormatMimeTypes[keyof FormatMimeTypes];
-	sha512_hash: number;
-	orig_sha512_hash: number;
-	source_url: string; // URL
-	comments?: Comments;
-	favourited_by_users?: Array<string>;
-	representations: Representations;
-	is_rendered: boolean;
-	is_optimized: boolean;
-}*/
